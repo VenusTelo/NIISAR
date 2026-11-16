@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ app_name }}</title>
+    
+    <!-- Leaflet para mapas -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+    
+    <!-- Estilos -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #2563eb;
+            --secondary: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --dark: #1f2937;
+            --light: #f9fafb;
+            --border: #e5e7eb;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: var(--dark);
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* Header */
+        header {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        header h1 {
+            color: var(--primary);
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        header h1 span {
+            font-size: 0.8em;
+            color: var(--secondary);
+        }
+        
+        header p {
+            color: #6b7280;
+            font-size: 1.1em;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            background: var(--secondary);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+        
+        /* Main Grid */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        
+        @media (max-width: 1200px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 20px;
+            font-size: 1.3em;
+            font-weight: 600;
+        }
+        
+        .card-body {
+            padding: 20px;
+        }
+        
+        /* Mapa */
+        #map {
+            height: 500px;
+            border-radius: 8px;
+            border: 2px solid var(--border);
+        }
+        
+        /* Formulario de búsqueda */
+        .search-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .search-form input {
+            padding: 12px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+        
+        .search-form input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        .search-form button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        
+        .search-form button:hover {
+            background: #1d4ed8;
+        }
+        
+        /* Productos NISAR */
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        
+        .product-item {
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: var(--light);
+        }
+        
+        .product-item:hover {
+            border-color: var(--primary);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(37,99,235,0.2);
+            background: white;
+        }
+        
+        .product-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        .product-item h3 {
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+        
+        .product-item .description {
+            font-size: 0.9em;
+            color: #6b7280;
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+        
+        .product-item .tech {
+            font-size: 0.85em;
+            color: var(--secondary);
+            font-weight: 600;
+        }
+        
+        /* Panel de análisis de región */
+        .region-panel {
+            background: linear-gradient(135deg, #f0f9ff, #ecfdf5);
+            border-left: 5px solid var(--secondary);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .region-panel h3 {
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+        
+        .region-panel .interpretation {
+            color: #374151;
+            margin: 15px 0;
+            line-height: 1.6;
+            font-size: 1.05em;
+        }
+        
+        /* Secciones técnicas colapsables (solo visibles en modo técnico) */
+        .tech-sections {
+            display: none;
+            margin-top: 25px;
+            gap: 25px;
+        }
+
+        .tech-sections.visible {
+            display: grid;
+        }
+
+        details.card > summary.card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            list-style: none;
+            user-select: none;
+        }
+
+        details.card > summary.card-header::-webkit-details-marker {
+            display: none;
+        }
+
+        details.card > summary.card-header::after {
+            content: '▾';
+            transition: transform 0.2s;
+        }
+
+        details.card:not([open]) > summary.card-header::after {
+            transform: rotate(-90deg);
+        }
+
+        details.card > summary.card-header:focus-visible {
+            outline: 3px solid #fff;
+            outline-offset: -6px;
+        }
+
+        /* Tabla de datos */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        
+        .data-table th {
+            background: var(--primary);
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        .data-table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .data-table tr:hover {
+            background: var(--light);
+        }
+        
+        /* Diccionario técnico */
+        .tech-dict {
+            background: #f3f4f6;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        
+        .tech-item {
+            display: flex;
+            gap: 15px;
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 6px;
+            border-left: 3px solid var(--primary);
+        }
+        
+        .tech-term {
+            font-weight: 600;
+            color: var(--primary);
+            min-width: 100px;
+        }
+        
+        .tech-translation {
+            color: #374151;
+            flex: 1;
+        }
+        
+        /* Loading */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8em;
+            }
+            
+            .search-form {
+                grid-template-columns: 1fr;
+            }
+            
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Footer */
+        footer {
+            background: rgba(255,255,255,0.9);
+            padding: 20px;
+            text-align: center;
+            color: #6b7280;
+            margin-top: 40px;
+            border-radius: 12px;
+        }
+        
+        .loading-spinner {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .analysis-images {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        .analysis-images figure { margin: 0; }
+        .analysis-images img { display: block; width: 100%; background: #e5e7eb; border-radius: 6px; }
+        .analysis-images figcaption { font-size: 0.85em; margin: 6px 0; }
+        .analysis-error { color: #b91c1c; padding: 20px; }
+        .analysis-controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; margin-top: 15px; }
+        .analysis-controls label { display: grid; gap: 5px; font-size: 0.9em; }
+        .analysis-controls input, .analysis-controls select, .analysis-controls button {
+            padding: 9px; border: 1px solid var(--border); border-radius: 6px; font: inherit;
+        }
+        .analysis-controls button { cursor: pointer; background: var(--primary); color: white; }
+        .analysis-controls button:disabled { cursor: not-allowed; opacity: 0.55; }
+        .date-slider { min-width: 190px; flex: 1; }
+        .date-slider input { width: 100%; }
+        #dates-status { margin-top: 10px; font-size: 0.9em; color: #4b5563; }
+
+        .view-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+        .view-tabs button { padding: 9px 14px; border: 1px solid var(--border); border-radius: 999px; background: #fff; font: inherit; cursor: pointer; }
+        .view-tabs button[aria-pressed="true"] { background: var(--primary); color: #fff; border-color: var(--primary); }
+        .mode-switch { margin-left: auto; }
+        .cat-map { display: block; width: 100%; max-width: 640px; background: repeating-conic-gradient(#f3f4f6 0% 25%, #fff 0% 50%) 50% / 16px 16px; border-radius: 8px; border: 1px solid var(--border); image-rendering: pixelated; }
+        .legend { list-style: none; padding: 0; margin: 10px 0; display: grid; gap: 6px; }
+        .legend li { display: flex; align-items: center; gap: 8px; font-size: 0.95em; }
+        .swatch { width: 18px; height: 18px; border-radius: 4px; border: 1px solid rgba(0,0,0,.25); flex: none; }
+        .fade-demo { display: flex; align-items: center; gap: 10px; font-size: 0.85em; color: #4b5563; margin: 6px 0 12px; }
+        .fade-demo span.chip { display: inline-block; width: 28px; height: 14px; border-radius: 3px; background: #D55E00; border: 1px solid rgba(0,0,0,.25); }
+        .summary-list { margin: 10px 0; padding-left: 20px; }
+        .summary-list li { margin: 4px 0; }
+        .caution { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px; padding: 10px 12px; font-size: 0.9em; margin-top: 10px; }
+        .tech-table { border-collapse: collapse; width: 100%; font-size: 0.9em; margin: 10px 0; }
+        .tech-table th, .tech-table td { border-bottom: 1px solid var(--border); padding: 6px 8px; text-align: left; }
+        .tech-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+        .bar-chart { margin: 14px 0; display: grid; gap: 10px; background: #fff; padding: 14px; border-radius: 8px; border: 1px solid var(--border); }
+        .bar-chart h4 { font-size: 0.95em; color: var(--dark); margin-bottom: 4px; }
+        .bar-row { display: grid; grid-template-columns: 190px 1fr 95px; align-items: center; gap: 10px; font-size: 0.88em; }
+        .bar-track { background: #f3f4f6; border-radius: 6px; height: 18px; overflow: hidden; border: 1px solid #e5e7eb; }
+        .bar-fill { height: 100%; transition: width 0.4s ease; }
+        .bar-val { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; color: #374151; }
+        .var-table { width: 100%; border-collapse: collapse; margin: 14px 0; background: #fff; border-radius: 8px; overflow: hidden; font-size: 0.9em; }
+        .var-table th { background: #1e40af; color: #fff; padding: 8px 10px; text-align: left; }
+        .var-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <h1>
+                📡 {{ app_name }} <span>Honduras</span>
+            </h1>
+            <p>SAR Data Analysis Platform for Environmental, Agricultural and Geological Monitoring</p>
+            <div class="status-badge" id="status">🟢 System Operational</div>
+        </header>
+        
+        <!-- Main Grid -->
+        <div class="main-grid">
+            <!-- Mapa -->
+            <div class="card">
+                <div class="card-header">🗺️ Interactive Map of Honduras</div>
+                <div class="card-body">
+                    <div id="map"></div>
+                    <p style="margin-top: 10px;">Draw a polygon or rectangle with the map controls. You can also create a window from coordinates.</p>
+                    <div class="search-form" style="margin-top: 15px;">
+                        <input type="number" id="search-lat" placeholder="Latitude (12 to 16.9)" step="0.01" min="12" max="16.9">
+                        <input type="number" id="search-lon" placeholder="Longitude (-89 to -83)" step="0.01" min="-89" max="-83">
+                        <button onclick="seleccionarCoordenadas()">Use coordinates</button>
+                    </div>
+                    <div class="analysis-controls">
+                        <label>Mode
+                            <select id="analysis-mode" onchange="actualizarModo()">
+                                <option value="compare">Compare two dates</option>
+                                <option value="single">Single date</option>
+                            </select>
+                        </label>
+                        <label class="date-slider"><span id="start-label">Start date</span>
+                            <output id="start-value">No dates</output>
+                            <input type="range" id="analysis-start" min="0" max="0" value="0" step="1" aria-label="Available start date" oninput="actualizarFechaInicial()" disabled>
+                        </label>
+                        <label class="date-slider" id="end-label"><span>Compatible end date</span>
+                            <output id="end-value">No dates</output>
+                            <input type="range" id="analysis-end" min="0" max="0" value="0" step="1" aria-label="Available end date" oninput="actualizarFechaFinal()" disabled>
+                        </label>
+                        <button id="analyze-button" onclick="buscarRegion()" disabled>Analyze area</button>
+                    </div>
+                    <p id="dates-status" role="status">Draw or select an area to check the available dates.</p>
+                    <button id="dates-retry" onclick="cargarFechas()" style="display:none;">Retry date lookup</button>
+                </div>
+            </div>
+            
+            <!-- Panel de Análisis -->
+            <div class="card">
+                <div class="card-header">📊 Region Analysis</div>
+                <div class="card-body" id="analysis-panel" style="display: none;">
+                    <div class="region-panel">
+                        <h3 id="analysis-title">Analysis result</h3>
+                        <p id="region-coords" style="color: #6b7280; margin: 10px 0;"></p>
+                        <p id="analysis-source"></p>
+                        <div class="view-tabs" role="group" aria-label="Category">
+                            <button type="button" id="tab-water" aria-pressed="true" onclick="elegirCategoria('water')">💧 Water, wetlands and flooding</button>
+                            <button type="button" id="tab-forest" aria-pressed="false" onclick="elegirCategoria('forest')">🌳 Forests, deforestation and fires</button>
+                            <button type="button" id="mode-switch" class="mode-switch" aria-pressed="false" onclick="alternarVista()">Switch to Technical Mode</button>
+                        </div>
+                        <div id="category-view"></div>
+                        <p style="margin-top: 10px; color: #6b7280; font-size: 0.9em;">
+                            Only pixels inside the drawn area are analyzed, and a single scene must cover it completely.
+                            The color thresholds are preliminary and not calibrated for Honduras; a signal change alone does not prove deforestation, flooding or any other phenomenon.
+                        </p>
+                    </div>
+                </div>
+                <div id="analysis-error" class="analysis-error" role="alert" style="display: none;"></div>
+                <div id="loading-analysis" class="loading-spinner" style="display: none;">
+                    <div class="loading"></div>
+                    <p>Searching for observations and reading the GCOV area. The first request may take several minutes.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Secciones técnicas: solo visibles en modo técnico; cada una se puede
+             esconder haciendo clic en su barra de título -->
+        <div class="tech-sections" id="tech-sections">
+            <details class="card" open>
+                <summary class="card-header">🛰️ Available NISAR Products</summary>
+                <div class="card-body">
+                    <div class="products-grid" id="products-grid"></div>
+                </div>
+            </details>
+
+            <details class="card" open>
+                <summary class="card-header">📚 Data Inventory</summary>
+                <div class="card-body">
+                    <div id="inventory-content">
+                        <p style="color: #6b7280;">Select a product to view its inventory</p>
+                    </div>
+                </div>
+            </details>
+
+            <details class="card" open>
+                <summary class="card-header">📖 NISAR Technical Glossary</summary>
+                <div class="card-body">
+                    <p style="margin-bottom: 15px; color: #6b7280;">
+                        Here you can find plain-language explanations of NISAR technical terms.
+                    </p>
+                    <div class="tech-dict" id="tech-dict"></div>
+                </div>
+            </details>
+        </div>
+
+        <!-- Footer -->
+        <footer>
+            <p>{{ app_name }} v{{ app_version }} | Data: NASA NISAR L1/L2/L3 Archive</p>
+        </footer>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+    <script>
+        // Inicialización del mapa
+        let map;
+        let selectedAreas;
+        
+        function initMap() {
+            // Centrar en Honduras
+            map = L.map('map').setView([15.0, -86.2], 8);
+            
+            // Agregar tiles
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 19
+            }).addTo(map);
+
+            selectedAreas = L.featureGroup().addTo(map);
+            if (L.Control.Draw) {
+                map.addControl(new L.Control.Draw({
+                    draw: { polygon: { allowIntersection: false }, rectangle: true,
+                            polyline: false, marker: false, circle: false, circlemarker: false },
+                    edit: { featureGroup: selectedAreas }
+                }));
+                map.on(L.Draw.Event.CREATED, event => {
+                    selectedAreas.clearLayers();
+                    selectedAreas.addLayer(event.layer);
+                    cargarFechas();
+                });
+                map.on(L.Draw.Event.DRAWSTART, reiniciarFechas);
+                map.on(L.Draw.Event.EDITSTART, reiniciarFechas);
+                map.on(L.Draw.Event.DELETESTART, reiniciarFechas);
+                map.on(L.Draw.Event.DRAWSTOP, recuperarFechas);
+                map.on(L.Draw.Event.EDITSTOP, recuperarFechas);
+                map.on(L.Draw.Event.DELETESTOP, recuperarFechas);
+            } else {
+                const errorBox = document.getElementById('analysis-error');
+                errorBox.textContent = 'Drawing tools failed to load. Use coordinates or check your connection.';
+                errorBox.style.display = 'block';
+            }
+
+            // Agregar sitios de referencia
+            cargarSitios();
+        }
+        
+        function cargarSitios() {
+            fetch('/api/sites')
+                .then(r => r.json())
+                .then(sites => {
+                    sites.forEach(site => {
+                        const marker = L.marker([site.latitude, site.longitude])
+                            .bindPopup(`<strong>${site.name}</strong>`)
+                            .addTo(map);
+                        marker.on('click', () => {
+                            document.getElementById('search-lat').value = site.latitude;
+                            document.getElementById('search-lon').value = site.longitude;
+                            seleccionarCoordenadas();
+                        });
+                    });
+                });
+        }
+        
+        function cargarProductos() {
+            fetch('/api/products')
+                .then(r => r.json())
+                .then(products => {
+                    const grid = document.getElementById('products-grid');
+                    grid.innerHTML = products.map(p => `
+                        <div class="product-item" onclick="cargarInventario('${p.code}')">
+                            <div class="product-icon">${p.icon}</div>
+                            <h3>${p.code}</h3>
+                            <p class="description">${p.name}</p>
+                            <p class="description">${p.description}</p>
+                            <p class="tech">🔬 ${p.technical}</p>
+                        </div>
+                    `).join('');
+                });
+        }
+        
+        function cargarInventario(product) {
+            const content = document.getElementById('inventory-content');
+            content.innerHTML = '<div class="loading"></div> Loading inventory...';
+
+            fetch(`/api/inventory/${product}`)
+                .then(r => r.json().then(data => {
+                    if (!r.ok) throw new Error(data.error || 'Could not load the inventory.');
+                    return data;
+                }))
+                .then(data => {
+                    let html = `<h3>${product} - Total: ${data.total} granules</h3>
+                               <table class="data-table">
+                               <tr><th>Path/Frame</th><th>Date</th><th>Maturity</th><th>Size</th></tr>`;
+
+                    Object.entries(data.grouped).forEach(([key, frames]) => {
+                        frames.forEach(f => {
+                            html += `<tr>
+                                    <td>${key}</td>
+                                    <td>${f.start_time}</td>
+                                    <td><span style="background: ${f.maturity === 'VALIDATED' ? 'green' : 'orange'}; color: white; padding: 3px 8px; border-radius: 4px; font-size: 0.85em;">${f.maturity}</span></td>
+                                    <td>${f.file_size_mb ? f.file_size_mb.toFixed(1) + ' MB' : 'N/A'}</td>
+                                </tr>`;
+                        });
+                    });
+                    html += '</table>';
+                    content.innerHTML = html;
+                })
+                .catch(error => {
+                    content.replaceChildren(el('p', error.message, 'caution'));
+                });
+        }
+        
+        let analysisController;
+        let datesController;
+        let availableDates = [];
+        let compatibleDates = {};
+        let firstDates = [];
+        let secondDates = [];
+        let ultimoAnalisis = null;
+        let datosCrudosTecnicos = null;
+        let categoriaActual = 'water';
+        let vistaTecnica = false;
+
+        function limpiarAnalisis() {
+            ultimoAnalisis = null;
+            datosCrudosTecnicos = null;
+            if (analysisController) analysisController.abort();
+            analysisController = null;
+            document.getElementById('loading-analysis').style.display = 'none';
+            document.getElementById('analysis-panel').style.display = 'none';
+            document.getElementById('analysis-error').style.display = 'none';
+            mostrarSeccionesTecnicas(false);
+        }
+
+        // Las tarjetas de productos, inventario y glosario solo se ven en modo técnico
+        function mostrarSeccionesTecnicas(visible) {
+            document.getElementById('tech-sections').classList.toggle('visible', visible);
+        }
+
+        function reiniciarFechas() {
+            limpiarAnalisis();
+            if (datesController) datesController.abort();
+            datesController = null;
+            availableDates = [];
+            compatibleDates = {};
+            firstDates = [];
+            secondDates = [];
+            document.getElementById('analysis-start').disabled = true;
+            document.getElementById('analysis-end').disabled = true;
+            document.getElementById('analyze-button').disabled = true;
+            document.getElementById('start-value').textContent = 'No dates';
+            document.getElementById('end-value').textContent = 'No dates';
+            document.getElementById('dates-retry').style.display = 'none';
+            document.getElementById('dates-status').textContent = 'Draw or select an area to check the available dates.';
+        }
+
+        function coordenadasArea(layer) {
+            const coordinates = layer.getLatLngs()[0].map(point => [point.lng, point.lat]);
+            coordinates.push(coordinates[0]);
+            return coordinates;
+        }
+
+        function recuperarFechas() {
+            if (!datesController && availableDates.length === 0) cargarFechas();
+        }
+
+        async function cargarFechas() {
+            reiniciarFechas();
+            const layer = selectedAreas.getLayers()[0];
+            if (!layer) return;
+            const controller = new AbortController();
+            datesController = controller;
+            const status = document.getElementById('dates-status');
+            status.textContent = 'Checking available GCOV dates for this area...';
+            try {
+                const response = await fetch('/api/analysis/dates', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ coordinates: coordenadasArea(layer) }),
+                    signal: controller.signal
+                });
+                const data = await response.json().catch(() => {
+                    throw new Error('The server returned an invalid response while checking the dates.');
+                });
+                if (!response.ok) throw new Error(data.error || 'Could not check the dates.');
+                if (datesController !== controller) return;
+                availableDates = data.dates;
+                compatibleDates = data.compatible;
+                datesController = null;
+                actualizarModo();
+            } catch (error) {
+                if (error.name !== 'AbortError' && datesController === controller) {
+                    status.textContent = error.message || 'Connection error while checking the dates.';
+                    document.getElementById('dates-retry').style.display = '';
+                }
+            } finally {
+                if (datesController === controller) datesController = null;
+            }
+        }
+
+        function seleccionarCoordenadas() {
+            const lat = parseFloat(document.getElementById('search-lat').value);
+            const lon = parseFloat(document.getElementById('search-lon').value);
+            if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 89.88 || Math.abs(lon) > 179.88) {
+                alert('Please enter valid coordinates to create the window.');
+                return;
+            }
+            selectedAreas.clearLayers();
+            selectedAreas.addLayer(L.rectangle([[lat - 0.12, lon - 0.12], [lat + 0.12, lon + 0.12]]));
+            map.fitBounds(selectedAreas.getBounds());
+            cargarFechas();
+        }
+
+        function actualizarModo() {
+            limpiarAnalisis();
+            const single = document.getElementById('analysis-mode').value === 'single';
+            document.getElementById('start-label').textContent = single ? 'Available date' : 'Start date';
+            document.getElementById('end-label').style.display = single ? 'none' : 'grid';
+            firstDates = single ? availableDates : availableDates.filter(day => (compatibleDates[day] || []).length > 0);
+            const slider = document.getElementById('analysis-start');
+            slider.max = Math.max(0, firstDates.length - 1);
+            slider.value = single ? Math.max(0, firstDates.length - 1) : 0;
+            slider.disabled = firstDates.length === 0;
+            const status = document.getElementById('dates-status');
+            if (datesController) {
+                status.textContent = 'Checking available GCOV dates for this area...';
+            } else if (!availableDates.length) {
+                status.textContent = 'No validated GCOV dates cover the entire selected area.';
+            } else if (!single && !firstDates.length) {
+                status.textContent = `${availableDates.length} date(s) available, but no two are compatible for comparison. Try “Single date”.`;
+            } else {
+                status.textContent = `${availableDates.length} date(s) available (UTC), from ${availableDates[0]} to ${availableDates[availableDates.length - 1]}. Each step is an available date; comparisons use the same path, frame and direction.`;
+            }
+            actualizarFechaInicial();
+        }
+
+        function actualizarFechaInicial() {
+            limpiarAnalisis();
+            const startSlider = document.getElementById('analysis-start');
+            const day = firstDates[Number(startSlider.value)];
+            document.getElementById('start-value').textContent = day || 'No dates';
+            startSlider.setAttribute('aria-valuetext', day || 'No dates');
+            const single = document.getElementById('analysis-mode').value === 'single';
+            secondDates = single || !day ? [] : (compatibleDates[day] || []);
+            const endSlider = document.getElementById('analysis-end');
+            endSlider.max = Math.max(0, secondDates.length - 1);
+            endSlider.value = Math.max(0, secondDates.length - 1);
+            endSlider.disabled = secondDates.length === 0;
+            actualizarFechaFinal();
+        }
+
+        function actualizarFechaFinal() {
+            limpiarAnalisis();
+            const endSlider = document.getElementById('analysis-end');
+            const day = secondDates[Number(endSlider.value)];
+            document.getElementById('end-value').textContent = day || 'No dates';
+            endSlider.setAttribute('aria-valuetext', day || 'No dates');
+            const start = firstDates[Number(document.getElementById('analysis-start').value)];
+            const single = document.getElementById('analysis-mode').value === 'single';
+            document.getElementById('analyze-button').disabled = !start || (!single && !day);
+        }
+
+
+        // ---------- Vista por categorías (modo intuitivo por defecto)
+        function elegirCategoria(cat) {
+            categoriaActual = cat;
+            renderizarAnalisis();
+        }
+
+        function alternarVista() {
+            vistaTecnica = !vistaTecnica;
+            renderizarAnalisis();
+        }
+
+        function el(tag, text, className) {
+            const node = document.createElement(tag);
+            if (text !== undefined && text !== null) node.textContent = text;
+            if (className) node.className = className;
+            return node;
+        }
+
+        function leyenda(items) {
+            const ul = el('ul', null, 'legend');
+            items.forEach(item => {
+                const li = el('li');
+                const sw = el('span', null, 'swatch');
+                sw.style.background = item.color;
+                li.append(sw, el('span', item.label));
+                ul.append(li);
+            });
+            return ul;
+        }
+
+        async function cargarDatosCrudosTecnicos() {
+            const container = document.getElementById('tech-raw-container');
+            if (!container) return;
+            const layer = selectedAreas.getLayers()[0];
+            if (!layer) return;
+            if (datosCrudosTecnicos) {
+                renderizarTablaCruda(container, datosCrudosTecnicos);
+                return;
+            }
+            container.innerHTML = '<div class="loading"></div> Querying all raw NISAR products for the selected area and range...';
+            const mode = document.getElementById('analysis-mode').value;
+            const start = firstDates[Number(document.getElementById('analysis-start').value)];
+            const end = mode === 'compare' ? secondDates[Number(document.getElementById('analysis-end').value)] : start;
+            try {
+                const resp = await fetch('/api/technical/raw', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ coordinates: coordenadasArea(layer), start, end })
+                });
+                const data = await resp.json();
+                if (!resp.ok) throw new Error(data.error || 'Error retrieving raw data');
+                datosCrudosTecnicos = data;
+                renderizarTablaCruda(container, data);
+            } catch (err) {
+                container.innerHTML = `<p class="caution">${err.message}</p>`;
+            }
+        }
+
+        function renderizarTablaCruda(container, data) {
+            container.replaceChildren();
+            container.append(el('h4', `Available raw NISAR products (${data.total} scenes found)`));
+            if (!data.products || !data.products.length) {
+                container.append(el('p', 'No additional raw products were found for this range and polygon.', 'caution'));
+                return;
+            }
+            const table = el('table', null, 'tech-table');
+            const head = el('tr');
+            ['Product', 'Level', 'Date (UTC)', 'Path/Frame', 'Direction', 'Granule ID'].forEach(t => head.append(el('th', t)));
+            table.append(head);
+            data.products.forEach(item => {
+                const tr = el('tr');
+                tr.append(
+                    el('td', item.product),
+                    el('td', item.level),
+                    el('td', item.date),
+                    el('td', `P${item.path} / F${item.frame}`),
+                    el('td', item.direction),
+                    el('td', item.granule_id)
+                );
+                table.append(tr);
+            });
+            container.append(table);
+        }
+
+        function renderizarAnalisis() {
+            const analysis = ultimoAnalisis;
+            if (!analysis) return;
+            const single = analysis.mode === 'single';
+            const fechas = single ? analysis.dates[0] : `${analysis.dates[0]} → ${analysis.dates[1]}`;
+            document.getElementById('analysis-title').textContent =
+                vistaTecnica ? `Technical Mode (Raw Data) · ${fechas}`
+                             : (single ? `Intuitive Mode · Terrain state (${fechas})` : `Intuitive Mode · Changes (${fechas})`);
+            document.getElementById('analysis-source').textContent = descripcionFuente(analysis);
+            mostrarSeccionesTecnicas(vistaTecnica);
+
+            const tabWater = document.getElementById('tab-water');
+            const tabForest = document.getElementById('tab-forest');
+            tabWater.style.display = vistaTecnica ? 'none' : '';
+            tabForest.style.display = vistaTecnica ? 'none' : '';
+            tabWater.setAttribute('aria-pressed', String(categoriaActual === 'water'));
+            tabForest.setAttribute('aria-pressed', String(categoriaActual === 'forest'));
+
+            const modeBtn = document.getElementById('mode-switch');
+            modeBtn.setAttribute('aria-pressed', String(vistaTecnica));
+            modeBtn.textContent = vistaTecnica ? 'Switch to Intuitive Mode' : 'Switch to Technical Mode';
+
+            const view = document.getElementById('category-view');
+            view.replaceChildren();
+
+            // --- MODO TÉCNICO: sin selección de vistas, solo datos en crudo de todos los productos NISAR
+            if (vistaTecnica) {
+                const rawBox = el('div');
+                rawBox.id = 'tech-raw-container';
+                view.append(rawBox);
+                cargarDatosCrudosTecnicos();
+
+                if (analysis.categories) {
+                    view.append(el('h4', 'Raw GCOV Radiometric Layers (HH / HV)'));
+                    const grid = el('div', null, 'analysis-images');
+                    const seen = new Set();
+                    ['water', 'forest'].forEach(k => {
+                        (analysis.categories[k].technical || []).forEach(layer => {
+                            if (seen.has(layer.title)) return;
+                            seen.add(layer.title);
+                            const fig = el('figure');
+                            const im = el('img');
+                            im.src = layer.image;
+                            im.alt = layer.title;
+                            fig.append(im, el('figcaption', `${layer.title} [${layer.range[0].toFixed(1)} to ${layer.range[1].toFixed(1)}]`));
+                            grid.append(fig);
+                        });
+                    });
+                    view.append(grid);
+                }
+                return;
+            }
+
+            // --- MODO INTUITIVO: Vista de Humedales o Vista de Bosques + Colorimétrico + Gráfica de Barras + Tabla de Variables
+            if (!analysis.categories) {
+                view.append(el('p', analysis.categories_note || 'No categories are available for this file.', 'caution'));
+                return;
+            }
+            const cat = analysis.categories[categoriaActual];
+
+            // 1. Mapa Colorimétrico + Leyenda
+            const img = el('img', null, 'cat-map');
+            img.src = cat.image;
+            img.alt = categoriaActual === 'water' ? 'Color-coded map of wetlands and water' : 'Color-coded map of forests';
+            view.append(img);
+            view.append(leyenda(cat.legend));
+
+            const hayCambios = cat.legend.some(item => item.is_change);
+            if (hayCambios) {
+                const demo = el('div', null, 'fade-demo');
+                const chip = el('span', null, 'chip');
+                const faded = el('span', null, 'chip');
+                faded.style.opacity = '0.31';
+                demo.append(chip, el('span', 'strong color = high reliability'), faded, el('span', 'faded color = low reliability'));
+                view.append(demo);
+            }
+
+            // 2. Gráfica de Barras de distribución espacial
+            const chartBox = el('div', null, 'bar-chart');
+            chartBox.append(el('h4', categoriaActual === 'water' ? '📊 Wetland and Water Distribution (% of area)' : '📊 Forest Cover Distribution (% of area)'));
+            cat.stats.classes.forEach(row => {
+                const rDiv = el('div', null, 'bar-row');
+                const label = el('span', row.label);
+                const track = el('div', null, 'bar-track');
+                const fill = el('div', null, 'bar-fill');
+                fill.style.width = `${Math.max(2, Math.min(100, row.percent))}%`;
+                fill.style.background = row.color;
+                track.append(fill);
+                const kmTxt = row.km2 !== undefined ? ` (${row.km2.toFixed(2)} km²)` : '';
+                const val = el('span', `${row.percent.toFixed(1)}%${kmTxt}`, 'bar-val');
+                rDiv.append(label, track, val);
+                chartBox.append(rDiv);
+            });
+            view.append(chartBox);
+
+            // 3. Tabla de Variables y Parámetros evaluados en esta vista
+            if (cat.variables && cat.variables.length) {
+                const vTable = el('table', null, 'var-table');
+                const vHead = el('tr');
+                ['Variable / Parameter', 'Role in the analysis', 'Threshold / Criterion (Honduras)'].forEach(t => vHead.append(el('th', t)));
+                vTable.append(vHead);
+                cat.variables.forEach(v => {
+                    const tr = el('tr');
+                    tr.append(el('td', v.param), el('td', v.role), el('td', v.threshold));
+                    vTable.append(tr);
+                });
+                view.append(vTable);
+            }
+
+            // 4. Resumen interpretativo en lenguaje sencillo
+            const ul = el('ul', null, 'summary-list');
+            cat.summary.forEach(line => ul.append(el('li', line)));
+            view.append(ul);
+
+            if (!analysis.has_looks) {
+                view.append(el('p', 'This file does not include the numberOfLooks layer: reliability was computed conservatively.', 'caution'));
+            }
+
+        }
+
+        function descripcionFuente(analysis) {
+            const resolution = analysis.sampling === 'muestreo'
+                ? `Sampling one pixel every ${analysis.pixel_factor} × ${analysis.pixel_factor} original pixels (reduced detail).`
+                : `Average of ${analysis.pixel_factor} × ${analysis.pixel_factor} original pixels.`;
+            return `Validated GCOV · Path ${analysis.path}, frame ${analysis.frame} · ${analysis.direction}. ${resolution}` +
+                (analysis.gap_days ? ` Gap between dates: ${analysis.gap_days} days.` : '');
+        }
+
+        async function buscarRegion() {
+            const layer = selectedAreas.getLayers()[0];
+            const mode = document.getElementById('analysis-mode').value;
+            const start = firstDates[Number(document.getElementById('analysis-start').value)];
+            const end = secondDates[Number(document.getElementById('analysis-end').value)];
+            if (!layer) {
+                alert('Draw an area on the map or create a window from coordinates.');
+                return;
+            }
+            if (!start || (mode === 'compare' && (!end || start >= end))) {
+                alert('Select available, compatible dates.');
+                return;
+            }
+            const coordinates = coordenadasArea(layer);
+            if (analysisController) analysisController.abort();
+            const controller = new AbortController();
+            analysisController = controller;
+            const errorBox = document.getElementById('analysis-error');
+            errorBox.style.display = 'none';
+            document.getElementById('loading-analysis').style.display = 'block';
+            document.getElementById('analysis-panel').style.display = 'none';
+            mostrarSeccionesTecnicas(false);
+
+            try {
+                const response = await fetch('/api/analysis', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ coordinates, mode, start, end }),
+                    signal: controller.signal
+                });
+                const analysis = await response.json().catch(() => {
+                    throw new Error('The server returned an invalid response while analyzing the region.');
+                });
+                if (!response.ok) throw new Error(analysis.error || 'Could not analyze the region.');
+
+                const center = layer.getBounds().getCenter();
+                document.getElementById('region-coords').textContent = `Area center: ${center.lat.toFixed(4)}°, ${center.lng.toFixed(4)}°`;
+                ultimoAnalisis = analysis;
+                renderizarAnalisis();
+                document.getElementById('analysis-panel').style.display = 'block';
+            } catch (error) {
+                if (error.name !== 'AbortError') {
+                    errorBox.textContent = error.message || 'Connection error while analyzing the region.';
+                    errorBox.style.display = 'block';
+                }
+            } finally {
+                if (analysisController === controller) {
+                    document.getElementById('loading-analysis').style.display = 'none';
+                    analysisController = null;
+                }
+            }
+        }
+        
+        // Cargar diccionario técnico
+        function cargarDiccionario() {
+            const terms = ['HH', 'HV', 'dB', 'phase', 'coherence', 'SAR', 'geocoded', 'interferometry'];
+            const dict = document.getElementById('tech-dict');
+            
+            dict.innerHTML = terms.map(term => `
+                <div class="tech-item">
+                    <div class="tech-term">${term}</div>
+                    <div class="tech-translation" id="trans-${term}">Loading...</div>
+                </div>
+            `).join('');
+            
+            terms.forEach(term => {
+                fetch(`/api/translate/${term}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        document.getElementById(`trans-${term}`).textContent = data.translation;
+                    });
+            });
+        }
+        
+        // Cargar estado
+        function cargarEstado() {
+            fetch('/api/status')
+                .then(r => r.json())
+                .then(status => {
+                    const badge = document.getElementById('status');
+                    badge.textContent = `🟢 ${status.status.toUpperCase()} | v${status.version}`;
+                });
+        }
+        
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', () => {
+            initMap();
+            cargarProductos();
+            cargarDiccionario();
+            cargarEstado();
+        });
+    </script>
+</body>
+</html>
